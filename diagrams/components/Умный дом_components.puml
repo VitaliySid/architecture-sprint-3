@@ -1,0 +1,76 @@
+@startuml Умный дом Container Diagram
+title Умный дом 
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+top to bottom direction
+
+Person(user, "Владелец", "Пользователь системы Умный дом")
+
+System_Boundary(system, "Система Умный дом") {
+    Container(apiGateway, "АPI Gateway", "Kusk", "Маршрутизация запросов, балансировка нагрузки, аутентификация, авторизация")
+
+    Container(telemetryService, "Телеметрия.API", ".Net", "Ведение информации поступающей с датчиков"){
+        Component(telemetryApiController, "Контроллер", "Обработка запросов пользователя к телеметрии")
+        Component(telemetryApiLogic, "Mediator", "CQRS")
+        Component(telemetryApiReadModel, "Репозиторий", "Запросы к БД")
+        Component(telemetryApiProducer, "Продюсер сообщений", "Kafka Producer")
+
+        Rel(telemetryApiController, telemetryApiLogic, "")
+        Rel(telemetryApiLogic, telemetryApiReadModel, "Выполнение обработчика запроса")
+        Rel(telemetryApiLogic, telemetryApiProducer, "Выполнение обработчика команды")
+    }
+
+    Container(deviceService, "Управление устройствами", ".Net", "Управление отоплением, автоматическое поддержание температуры"){
+        Component(deviceController, "Контроллер", "Обработка запросов пользователя к устройствам")
+        Component(deviceLogic, "Сервис", "Бизнес логика")
+        Component(deviceRepo, "Репозиторий", "Запросы к БД")
+        Component(deviceTelemetryClient, "Клиент сервиса телеметрии")
+
+        Rel(deviceController, deviceLogic, "")
+        Rel(deviceLogic, deviceRepo, "")
+        Rel(deviceLogic, deviceTelemetryClient, "")
+    }
+
+    Container(telemetryBackService, "Телеметрия.Service", ".Net", "Ведение информации поступающей с датчиков"){
+        Component(telemetryBackConsumer, "Консьюмер", "Получение сообщений из очереди")
+        Component(telemetryBackLogic, "Mediator", "CQRS")
+        Component(telemetryBackWriteModel, "Репозиторий", "Запросы к БД")
+        Component(telemetrydeviceExtClient, "Клиент внешней системы")
+
+        Rel(telemetryBackConsumer, telemetryBackLogic, "")
+        Rel(telemetryBackLogic, telemetryBackWriteModel, "Выполнение обработчика команды")
+        Rel(telemetryBackLogic, telemetrydeviceExtClient, "Выполнение обработчика команды")
+    }
+    
+    ContainerDb(telemetryDb, "База данных", "ClickHouse")
+    ContainerDb(deviceDb, "База данных", "PostgreSQL")
+    ContainerQueue(broker, "Брокер сообщений", "Kafka, RabbitMQ")
+    
+    Rel(apiGateway, telemetryApiController, "Получить телеметрию: последнюю, за период", "REST")
+    Rel(telemetryApiReadModel, telemetryDb, "Чтение", "TCP")
+    Rel(telemetryApiProducer, broker, "Отправляет команды/телеметрию","AMQP/MQTT")
+
+
+    Rel(apiGateway, deviceController, "CRUD, вкл/выкл, выполнить команду", "REST")
+    Rel(deviceTelemetryClient, telemetryApiController, "Отправляет команды","REST")
+    Rel(deviceRepo, deviceDb, "Чтение / запись", "TCP")
+
+    Rel_L(broker, telemetryBackConsumer, "Отправляет команды/телеметрию","AMQP/MQTT")
+    Rel_L(telemetryBackWriteModel, telemetryDb, "Запись","TCP")
+}
+
+System_Ext(authProvider, "Аутентификация/авторизация", "Провайдер авторизации", "OAuth 2.0/openId")
+System_Ext(device, "Устройства", "API устройств", "Rest API")
+
+Rel_L(user, authProvider, "Регистрация/Авторизация", "HTTPS")
+
+Rel_L(apiGateway, authProvider, "Проверка токена авторизации", "HTTPS")
+
+Rel(telemetrydeviceExtClient, device, "Отправляет команды", "HTTPS,REST")
+Rel(device, telemetryApiController, "Отправляет телеметрию", "HTTPS,REST")
+
+Rel(user, apiGateway, "Пользуется системой", "HTTPS")
+
+@enduml

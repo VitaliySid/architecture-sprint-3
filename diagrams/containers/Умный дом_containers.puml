@@ -1,0 +1,48 @@
+@startuml Умный дом Container Diagram
+title Умный дом 
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+top to bottom direction
+
+Person(user, "Владелец", "Пользователь системы Умный дом")
+
+System_Boundary(system, "Система Умный дом") {
+    Container(apiGateway, "АPI Gateway", "Kusk", "Маршрутизация запросов, балансировка нагрузки, аутентификация, авторизация")
+
+    Container(telemetryService, "Телеметрия.API", ".Net", "Ведение информации поступающей с датчиков")
+    Container(deviceService, "Управление устройствами", ".Net", "Управление отоплением, автоматическое поддержание температуры")
+
+     Container(telemetryBackService, "Телеметрия.Service", ".Net", "Ведение информации поступающей с датчиков")
+    
+    ContainerDb(telemetryDb, "База данных", "ClickHouse")
+    ContainerDb(deviceDb, "База данных", "PostgreSQL")
+    ContainerQueue(broker, "Брокер сообщений", "Kafka, RabbitMQ")
+
+    Rel(apiGateway, telemetryService, "Получить телеметрию: последнюю, за период", "REST")
+    Rel(apiGateway, deviceService, "CRUD, вкл/выкл, выполнить команду", "REST")
+
+    Rel(deviceService, telemetryService, "Отправляет команды","REST")
+
+    Rel_L(broker, telemetryBackService, "Отправляет команды/телеметрию","AMQP/MQTT")
+    Rel_L(telemetryBackService, telemetryDb, "Запись","TCP")
+
+    Rel(deviceService, deviceDb, "Чтение / запись", "TCP")
+    Rel(telemetryService, telemetryDb, "Чтение", "TCP")
+    Rel(telemetryService, broker, "Отправляет команды/телеметрию","AMQP/MQTT")
+
+}
+
+System_Ext(authProvider, "Аутентификация/авторизация", "Провайдер авторизации", "OAuth 2.0/openId")
+System_Ext(device, "Устройства", "API устройств", "Rest API")
+
+Rel_L(user, authProvider, "Регистрация/Авторизация", "HTTPS")
+
+Rel_L(apiGateway, authProvider, "Проверка токена авторизации", "HTTPS")
+
+Rel(telemetryBackService, device, "Отправляет команды", "HTTPS,REST")
+Rel(device, telemetryService, "Отправляет телеметрию", "HTTPS,REST")
+
+Rel(user, apiGateway, "Пользуется системой", "HTTPS")
+
+@enduml
