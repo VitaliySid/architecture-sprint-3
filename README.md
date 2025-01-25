@@ -1,7 +1,7 @@
 # Задание 1. Анализ и планирование
 
-![](/diagrams/context/Умный%20дом_AsIs.svg)
-[Ссылка на исходник](/diagrams/context/Умный%20дом_AsIs.puml)
+![](/diagrams/context/Умный%20дом.png)
+[Ссылка на исходник](/diagrams/context/Умный%20дом.puml)
 
 **Управление отоплением:**
 
