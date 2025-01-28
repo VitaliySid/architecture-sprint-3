@@ -1,0 +1,76 @@
+@startuml SmartHome_containers
+title SmartHome_containers
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+top to bottom direction
+
+Person(user, "Владелец", "Пользователь системы Умный дом")
+
+System_Boundary(system, "Система Умный дом") {
+
+    Container(webApp, "Веб-приложение", "ASP.NET Core MVC")
+    Container(mobileApp, "Мобильное приложение", "Android")
+    Container(apiGateway, "АPI Gateway", "Kusk", "Маршрутизация запросов, балансировка нагрузки, аутентификация, авторизация")
+
+    Container(userService, "Управление пользователями", ".Net", "Управление пользователями.")
+
+    Container(telemetryService, "Телеметрия.API", ".Net", "Ведение информации поступающей с датчиков")
+    Container(deviceService, "Управление устройствами", ".Net", "Управление отоплением, автоматическое поддержание температуры")
+
+    Container(telemetryBackService, "Телеметрия.Service", ".Net", "Ведение информации поступающей с датчиков")
+
+    Container(scenarioService, "Сервис сценариев и автоматизации", ".Net", "Запуск автоматизации при возникновении событий")
+    
+    ContainerDb(telemetryDb, "База данных", "ClickHouse")
+    ContainerDb(deviceDb, "База данных", "PostgreSQL")
+    ContainerQueue(broker, "Брокер сообщений", "Kafka, RabbitMQ")
+    ContainerDb(userDb, "База данных", "PostgreSQL", "Хранение пользователей")
+    ContainerDb(scenarioDb, "База данных", "PostgreSQL", "Хранение сценариев автоматизации")
+
+    Rel(webApp, apiGateway, "Работа с устройствами, Получение текущей телеметрии, Создание/управление сценариями", "REST")
+    Rel(mobileApp, apiGateway, "Работа с устройствами, Получение текущей телеметрии, Создание/управление сценариями", "REST")
+
+    Rel(apiGateway, telemetryService, "Работа с телеметрией устройств. \n Обработка данных от \n модулей внешних систем", "REST")
+    Rel(apiGateway, deviceService, "CRUD, вкл/выкл, выполнить команду", "REST")
+    Rel(apiGateway, userService, "CRUD операции, получение информации о пользователей", "REST")
+
+    Rel(apiGateway, scenarioService, "Управление сценариями автоматизации", "REST")
+
+    Rel(deviceService, telemetryService, "Отправляет команды","REST")
+
+    Rel(broker, telemetryBackService, "Отправляет команды/телеметрию","AMQP/MQTT")
+    Rel(telemetryBackService, telemetryDb, "Запись","TCP")
+
+    Rel(deviceService, deviceDb, "Чтение / запись", "TCP")
+    Rel(telemetryService, telemetryDb, "Чтение", "TCP")
+    Rel(telemetryService, broker, "Отправляет команды/телеметрию","AMQP/MQTT")
+
+    Rel(userService, userDb, "Чтение / запись", "TCP")
+
+    Rel(scenarioService, broker, "Получение обновлений значений телеметрии","AMQP/MQTT")
+
+    Rel(scenarioService, scenarioDb, "Чтение / запись", "TCP")
+}
+
+System_Ext(authProvider, "Аутентификация/авторизация", "Провайдер авторизации", "OAuth 2.0/openId")
+System_Ext(device, "Устройства", "API модулей устройств", "Rest API"){
+    Container(tp1, "Модуль доступа на территорию", "Ворота")
+    Container(tp2, "Модуль видеонаблюдения", "Камеры")
+    Container(tp3, "Модуль отопления", "Отопление")
+    Container(tp4, "Модуль освещения", "Лампочки, люстры")
+}
+
+Rel(user, authProvider, "Регистрация/Авторизация", "HTTPS")
+Rel(authProvider, apiGateway, "Получение информации о пользователях", "HTTPS")
+
+Rel(apiGateway, authProvider, "Проверка токена авторизации", "HTTPS")
+
+Rel_R(telemetryBackService, device, "Отправляет команды на устройства", "HTTPS,REST")
+Rel_U(device, apiGateway, "Отправляет телеметрию", "HTTPS,REST")
+Rel_R(scenarioService, device, "Отправляет команды  на устройства", "HTTPS,REST")
+
+Rel(user, webApp, "Пользуется системой", "HTTPS")
+Rel(user, mobileApp, "Пользуется системой", "HTTPS")
+
+@enduml
