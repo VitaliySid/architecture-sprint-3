@@ -1,0 +1,17 @@
+@startuml Умный дом
+
+title "Умный дом"
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "Владелец", "Пользователь системы")
+System(sys, "Умный дом", "Управление температурой. Получение показателей температуры.")
+
+System_Ext(dt1, "Система отопления ", "API Системы \n Датчики температуры \n Нагревательные элементы") 
+
+Rel(user, sys, "Управляет отоплением. Получение температуры. \n [http]")
+Rel(sys, dt1, "Вкл/Выкл \n Установить температуру \n Запросить текущую температуру \n [http]")
+
+@enduml

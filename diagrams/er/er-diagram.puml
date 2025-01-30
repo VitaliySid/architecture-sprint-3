@@ -1,0 +1,86 @@
+@startuml er-diagram
+
+title ER Умный дом
+
+entity user {
+  * id guid PK
+  --
+  * login varchar[16]
+  * fist_name varchar[32]
+  * last_name varchar[32]
+  middle_name varchar[32]
+  --
+  unique(login)
+}
+
+entity house {
+  * id guid PK
+  --
+  * name varchar[16]
+  * user_id guid
+
+  user_id foreign key user(id)
+}
+
+entity device_type {
+  * id int PK
+  --
+  * name varchar[32]
+  --
+  unique(name)
+}
+
+entity device {
+  * id int PK
+  --
+  * type_id int
+  * status int
+  * name varchar[64]
+  serial_number varchar[32]
+  
+  --
+  type_id foreign key device_type(id)
+}
+
+entity device_to_module {
+   * module_id guid
+   * device_id guid
+   --
+   module_id foreign key module(id)
+   device_id foreign key device(id)
+   --
+   unique(device_id)
+}
+
+entity telemetry_data {
+  * device_id int
+  * data varchar[128]
+  --
+  timestamp long default current_timestamp
+  device_id foreign key device(id)
+}
+
+entity module {
+  * id PK
+  --
+  * name varchar[64]
+  * house_id guid
+  * device_type_id id
+  * serial_number varchar[32]
+  --
+  house_id foreign key house(id)
+  device_type_id foreign key device_type(id)
+}
+
+device_type ||--|{ device
+device_type ||--|{ module
+house ||--|{ module
+
+device_to_module ||--|| device
+device_to_module }|-- module
+
+telemetry_data }|-- device
+
+user ||--|{ house
+
+@enduml

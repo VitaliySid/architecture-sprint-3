@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  title: Умный Дом
+  description: Api  для сервисов Телеметрии и Управления
+  version: 1.0.1
+servers:
+  - url: https://smarthome.info/
+tags:
+  - name: telemetry
+    description: Работа с показателями телеметрии устройств
+  - name: device
+    description: Работа с устройствами
+paths:
+  /telemetry/latest:
+    get:
+      summary: Получить последнее показание устройства
+      tags:
+        - telemetry
+      parameters:
+        - name: deviceId
+          in: path
+          description: Идентификатор устройства
+          required: true
+          schema:
+            type: string
+          example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                properties:
+                  houseId:
+                    description: Идентификатор дома
+                    type: string
+                    example: "5254c199-9f02-44b8-bb7c-8810dba249c2"
+                  deviceId:
+                    description: Идентификатор устройства
+                    type: string
+                    example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+                  deviceType:
+                    description: Тип устройства
+                    type: string
+                    example: "temperature"
+                  value:
+                    description: Значение телеметрии
+                    type: string
+                    example: "23,5"
+                  unit:
+                    description: Единица измерения
+                    type: string
+                    example: "°C"
+                  timestamp:
+                    description: Метка времени (unix timestamp)
+                    type: integer
+                    example: 1737827844
+  /telemetry:
+    post:
+      summary: Отправка показателей телеметрии
+      tags:
+        - telemetry
+      description: Отправка данных с устройства
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                houseId:
+                  description: Идентификатор дома
+                  type: string
+                  example: "5254c199-9f02-44b8-bb7c-8810dba249c2"
+                deviceId:
+                  description: Идентификатор устройства
+                  type: string
+                  example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+                value:
+                  description: Значение телеметрии
+                  type: string
+                  example: "23,5"
+                timestamp:
+                  description: Метка времени (unix timestamp)
+                  type: integer
+                  example: 1737827844
+        required: true
+      responses:
+        "201":
+          description: Сохранено
+  /telemetry/executeCommand:
+    post:
+      summary: Отправка данных о новом приборе
+      tags:
+        - telemetry
+      description: Выполнение команды на устройстве
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                houseId:
+                  description: Идентификатор дома
+                  type: string
+                  example: "5254c199-9f02-44b8-bb7c-8810dba249c2"
+                deviceId:
+                  description: Идентификатор устройства
+                  type: string
+                  example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+                command:
+                  description: Команда в формате устройства
+                  type: string
+                  example: "+2"
+        required: true
+      responses:
+        "200":
+          description: Успех
+  /devices/:
+    post:
+      summary: Добавление нового устройства
+      tags:
+        - device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                deviceId:
+                  description: Идентификатор устройства
+                  type: string
+                  example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+                name:
+                  description: "Имя устройства"
+                  type: string
+                  example: "gate_7"
+                typeId:
+                  description: "Тип устройства"
+                  type: integer
+                  example: 12
+                status:
+                  description: "Текущее состояние устройства"
+                  type: integer
+                  example: 1
+                serialNumber:
+                  description: "Серийный номер устройства"
+                  type: string
+                  example: "Axis-03B"
+        required: true
+      responses:
+        "201":
+          description: Сохранено
+  /devices/{deviceId}:
+    get:
+      summary: Получение данных о устройстве
+      tags:
+        - device
+      parameters:
+        - name: deviceId
+          in: path
+          description: Идентификатор устройства
+          required: true
+          schema:
+            type: string
+          example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                properties:
+                  deviceId:
+                    description: Идентификатор устройства
+                    type: string
+                    example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+                  name:
+                    description: "Имя устройства"
+                    type: string
+                    example: "gate_7"
+                  typeId:
+                    description: "Тип устройства"
+                    type: integer
+                    example: 12
+                  status:
+                    description: "Текущее состояние устройства"
+                    type: integer
+                    example: 1
+                  serialNumber:
+                    description: "Серийный номер устройства"
+                    type: string
+                    example: "Axis-03B"
+  /devices/{device_id}:
+    delete:
+      summary: Удаление устройства
+      tags:
+        - device
+      parameters:
+        - name: device_id
+          in: path
+          description: Идентификатор устройства
+          required: true
+          schema:
+            type: string
+          example: "5254c199-9f02-44b8-bb7c-8810dba249c1"
+      responses:
+        "200":
+          description: Успешно

@@ -1,0 +1,56 @@
+@startuml
+title Code Diagram
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+
+class TelemetryController {
+  + getCurrent(houseId, deviceId)
+  + add(houseId, deviceId, value, utcTime)
+  + execute(houseId, deviceId, command)
+}
+
+class TelemetryExecCommand {
+  +houseId: Guid
+  +deviceId: Guid
+  +command: String
+
+  +Handle()
+}
+
+class TelemetryAddCommand {
+  +houseId: Guid
+  +deviceId: Guid
+  +value: String
+  +timestamp: Long
+
+  +Handle()
+}
+
+class TelemetryGetCurrentQuery {
+  +houseId: Guid
+  +deviceId: Guid
+
+  +Handle()
+}
+
+class TelemetryReadModel {
+  +getLast(deviceId)
+}
+
+class TelemetryProducer {
+  + addCommand(houseId, deviceId, command)
+  + addTelemetry(houseId, deviceId, value)
+}
+
+
+TelemetryController -> TelemetryExecCommand
+TelemetryExecCommand -> TelemetryProducer
+
+TelemetryController -> TelemetryAddCommand
+TelemetryAddCommand -> TelemetryProducer
+
+TelemetryController <-- TelemetryGetCurrentQuery
+TelemetryGetCurrentQuery <-- TelemetryReadModel
+
+@enduml
